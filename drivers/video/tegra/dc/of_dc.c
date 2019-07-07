@@ -166,6 +166,8 @@ struct tegra_panel_ops *tegra_dc_get_panel_ops(struct device_node *panel_np)
 		p_ops = &dsi_lgd_wxga_7_0_ops;
 	else if (of_device_is_compatible(panel_np, "s,wqxga-10-1"))
 		p_ops = &dsi_s_wqxga_10_1_ops;
+	else if (of_device_is_compatible(panel_np, "s,wqxga-10-2"))
+		p_ops = &dsi_s_wqxga_10_2_ops;
 	else if (of_device_is_compatible(panel_np, "c,wxga-14-0"))
 		p_ops = &lvds_c_1366_14_ops;
 	else if (of_device_is_compatible(panel_np, "a,1080p-14-0"))
@@ -295,6 +297,7 @@ static struct device_node *tegra_dc_get_panel_from_disp_board_id(
 	bool is_edp_i_1080p_11_6 = false;
 	bool is_edp_a_1080p_14_0 = false;
 	bool is_edp_s_2160p_15_6 = false;
+	bool is_dsi_s_2560_1800_10_2 = true;
 
 	if (!pdata) {
 		pr_err("%s: invalid input: NULL pdata\n", __func__);
@@ -375,6 +378,9 @@ static struct device_node *tegra_dc_get_panel_from_disp_board_id(
 		break;
 	}
 
+	if (is_dsi_s_2560_1800_10_2)
+		panel_np = of_find_compatible_node(NULL, NULL,
+				"s,wqxga-10-2");
 	if (is_dsi_a_1200_1920_8_0)
 		panel_np = of_find_compatible_node(NULL, NULL,
 				"a,wuxga-8-0");
