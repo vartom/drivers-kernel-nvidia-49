@@ -6778,7 +6778,7 @@ static int tegra_dc_probe(struct platform_device *ndev)
 	if (dc->pdata->flags & TEGRA_DC_FLAG_ENABLED) {
 		/* WAR: BL is putting DC in bad state for EDP configuration */
 		if (!tegra_platform_is_vdk() &&
-			(dc->out->type == TEGRA_DC_OUT_DP)) {
+			(dc->out->type == TEGRA_DC_OUT_DP || dc->out->type == TEGRA_DC_OUT_DSI)) {
 			tegra_disp_clk_prepare_enable(dc->clk);
 			if (tegra_dc_is_t21x()) {
 				dc->rst = of_reset_control_get(np, "dc_rst");
