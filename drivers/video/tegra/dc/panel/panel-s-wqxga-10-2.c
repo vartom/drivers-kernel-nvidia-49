@@ -1,5 +1,5 @@
 /*
- * panel-s-wqxga-10-1.c: Panel driver for s-wqxga-10-1 panel.
+ * panel-s-wqxga-10-2.c: Panel driver for s-wqxga-10-2 panel.
  *
  * Copyright (c) 2012-2017, NVIDIA CORPORATION. All rights reserved.
  *
@@ -90,17 +90,6 @@ static int dsi_s_wqxga_10_2_enable(struct device *dev)
 		en_panel_en = panel_of.panel_gpio[TEGRA_GPIO_PANEL_EN];
 
 
-
-	/* use platform data */
-	gpio_direction_output(en_panel_en, 1);
-	gpio_direction_output(en_panel_rst, 1);
-
-	gpio_set_value(en_panel_en, 1);
-	usleep_range(1000, 15000);
-	gpio_set_value(en_panel_rst, 1);
-	usleep_range(3000, 5000);
-
-
 	if (power) {
 		err = regulator_enable(power);
 		if (err < 0) {
@@ -120,6 +109,14 @@ static int dsi_s_wqxga_10_2_enable(struct device *dev)
 	}
 
 	usleep_range(1000, 3000);
+
+		/* use platform data */
+	gpio_direction_output(en_panel_en, 1);
+	gpio_direction_output(en_panel_rst, 1);
+	gpio_set_value(en_panel_en, 1);
+	usleep_range(10000, 15000);
+	gpio_set_value(en_panel_rst, 1);
+	usleep_range(3000, 5000);
 
 	return 0;
 fail:
