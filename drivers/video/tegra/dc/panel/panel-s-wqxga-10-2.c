@@ -63,9 +63,16 @@ fail:
 
 static int dsi_s_wqxga_10_2_enable(struct device *dev)
 {
+	pr_info("dsi_s_wqxga_10_2_enable\n");
+	return 0;
+}
+
+
+static int dsi_s_wqxga_10_2_postpoweron(struct device *dev)
+{
 	int err = 0;
 
-	pr_info("dsi_s_wqxga_10_2_enable\n");
+	pr_info("dsi_s_wqxga_10_2_postpoweron\n");
 
 	err = dalmore_dsi_regulator_get(dev);
 	if (err < 0) {
@@ -123,20 +130,14 @@ fail:
 	return err;
 }
 
-static int dsi_s_wqxga_10_2_postpoweron(struct device *dev)
-{
-	pr_info("dsi_s_wqxga_10_2_postpoweron\n");
-	return 0;
-}
-
 static int dsi_s_wqxga_10_2_disable(struct device *dev)
 {
 	pr_info("dsi_s_wqxga_10_2_disable\n");
-	gpio_set_value(en_panel_rst, 1);
+	gpio_set_value(en_panel_rst, 0);
 
 	usleep_range(1000, 3000);
 
-	gpio_set_value(en_panel_en, 1);
+	gpio_set_value(en_panel_en, 0);
 
 	usleep_range(2000, 4000);
 
