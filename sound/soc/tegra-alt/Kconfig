@@ -128,6 +128,26 @@ config DISABLE_ADSP_AUDIO
 	help
 	 Say Y if you want to disable support for Tegra210 ADSP module
 
+config SND_SOC_TEGRA_T210REF_MOBILE_RT5677_ALT
+	tristate "SoC Audio support for T210Ref mobile"
+	depends on SND_SOC_TEGRA_ALT && I2C
+	depends on ARCH_TEGRA_210_SOC
+	select SND_SOC_TEGRA210_XBAR_ALT
+	select SND_SOC_TEGRA210_PCM_ALT
+	select SND_SOC_TEGRA210_ADMA_ALT
+	select SND_SOC_TEGRA210_ADMAIF_ALT
+	select SND_SOC_TEGRA210_I2S_ALT
+	select SND_SOC_TEGRA210_MIXER_ALT
+	select SND_SOC_TEGRA210_SFC_ALT
+	select SND_SOC_SPDIF
+	select SND_SOC_RT5677
+	select SND_SOC_RT5677_SPI
+	select SND_SOC_MAX98357A
+	select SND_SOC_NAU8825
+	select SND_SOC_TEGRA_ASOC_MACHINE_ALT
+	help
+	  Say Y or M here.
+
 config SND_SOC_TEGRA_T210REF_ALT
 	tristate "SoC Audio support for T210Ref"
 	depends on SND_SOC_TEGRA_ALT
