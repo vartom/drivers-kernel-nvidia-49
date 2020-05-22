@@ -63,12 +63,15 @@ struct tegra_asoc {
 
 /* machine structure which holds sound card */
 struct tegra_machine {
+	struct tegra_asoc_platform_data *pdata;
 	struct tegra_asoc_audio_clock_info audio_clock;
 	struct tegra_machine_soc_data *soc_data;
 	struct tegra_asoc *asoc;
+	struct snd_soc_jack jack;
 	unsigned int num_codec_links;
 	int rate_via_kcontrol;
 	int fmt_via_kcontrol;
+	int gpio_requested;
 };
 
 extern struct snd_soc_dai_link tegra186_xbar_dai_links[];
