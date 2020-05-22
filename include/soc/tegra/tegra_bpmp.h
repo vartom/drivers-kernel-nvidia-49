@@ -18,11 +18,13 @@
 #define _SOC_TEGRA_TEGRA_BPMP_H
 
 #include <linux/kernel.h>
+#include <soc/tegra/bpmp.h>
 
 typedef void (*bpmp_mrq_handler)(int mrq, void *data, int ch);
 
-#ifdef CONFIG_NV_TEGRA_BPMP
+
 int tegra_bpmp_running(void);
+#ifdef CONFIG_NV_TEGRA_BPMP
 int tegra_bpmp_send_receive_atomic(int mrq, void *ob_data, int ob_sz,
 		void *ib_data, int ib_sz);
 int tegra_bpmp_send_receive(int mrq, void *ob_data, int ob_sz,
@@ -36,15 +38,17 @@ uint32_t tegra_bpmp_mail_readl(int ch, int offset);
 int tegra_bpmp_read_data(unsigned int ch, void *data, size_t sz);
 void tegra_bpmp_mail_return(int ch, int code, int v);
 void tegra_bpmp_mail_return_data(int ch, int code, void *data, int sz);
+#else
 void *tegra_bpmp_alloc_coherent(size_t size, dma_addr_t *phys,
 		gfp_t flags);
 void tegra_bpmp_free_coherent(size_t size, void *vaddr,
 		dma_addr_t phys);
 #ifdef CONFIG_DEBUG_FS
-struct dentry *tegra_bpmp_debugfs_add_file(char *name,
-	umode_t mode, void *data, const struct file_operations *fops);
+//struct dentry *tegra_bpmp_debugfs_add_file(char *name,
+//	umode_t mode, void *data, const struct file_operations *fops);
 #endif
-#else
+
+#ifdef CONFIG_NV_TEGRA_BPMP
 static inline int tegra_bpmp_running(void) { return 0; }
 static inline int tegra_bpmp_send_receive_atomic(int mrq, void *ob_data,
 		int ob_sz, void *ib_data, int ib_sz) { return -ENODEV; }
@@ -66,10 +70,13 @@ static inline void *tegra_bpmp_alloc_coherent(size_t size, dma_addr_t *phys,
 		gfp_t flags) { return NULL; }
 static inline void tegra_bpmp_free_coherent(size_t size, void *vaddr,
 		dma_addr_t phys) { }
+#endif
 #ifdef CONFIG_DEBUG_FS
+//struct dentry *tegra_bpmp_debugfs_add_file(char *name,
+//	umode_t mode, void *data, const struct file_operations *fops)
+//{ return NULL; }
 struct dentry *tegra_bpmp_debugfs_add_file(char *name,
-	umode_t mode, void *data, const struct file_operations *fops)
-{ return NULL; }
+	umode_t mode, void *data, const struct file_operations *fops);
 #endif
 #endif
 
