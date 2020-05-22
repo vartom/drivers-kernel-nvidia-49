@@ -32,6 +32,7 @@ static struct regulator *ddi;
 static struct regulator *power;
 static u16 en_panel_en;
 static u16 en_panel_rst;
+static u16 ts_reset_gpio;
 
 static int dalmore_dsi_regulator_get(struct device *dev)
 {
@@ -96,7 +97,6 @@ static int dsi_s_wqxga_10_2_postpoweron(struct device *dev)
 	if (gpio_is_valid(panel_of.panel_gpio[TEGRA_GPIO_PANEL_EN]))
 		en_panel_en = panel_of.panel_gpio[TEGRA_GPIO_PANEL_EN];
 
-
 	if (power) {
 		err = regulator_enable(power);
 		if (err < 0) {
@@ -125,6 +125,10 @@ static int dsi_s_wqxga_10_2_postpoweron(struct device *dev)
 	gpio_set_value(en_panel_rst, 1);
 	usleep_range(3000, 5000);
 
+	ts_reset_gpio = TEGRA_GPIO_PV6;
+	gpio_set_value(ts_reset_gpio, 0);
+	usleep_range(9000, 10000);
+	gpio_set_value(ts_reset_gpio, 1);
 	return 0;
 fail:
 	return err;
@@ -141,13 +145,13 @@ static int dsi_s_wqxga_10_2_disable(struct device *dev)
 
 	usleep_range(2000, 4000);
 
-	if (ddi)
-		regulator_disable(ddi);
+//	if (ddi)
+	//	regulator_disable(ddi);
 
 	usleep_range(5000, 6000);
 
-	if (power)
-		regulator_disable(power);
+//	if (power)
+//		regulator_disable(power);
 
 	return 0;
 }
