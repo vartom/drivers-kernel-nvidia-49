@@ -25,7 +25,6 @@
 #include <linux/regulator/consumer.h>
 #include <linux/delay.h>
 #include <linux/pm_runtime.h>
-#include <linux/version.h>
 #include <linux/platform_data/tegra_asoc_pdata.h>
 #include <sound/core.h>
 #include <sound/jack.h>
@@ -40,14 +39,13 @@
 #include "../codecs/rt5677.h"
 #include "../codecs/nau8825.h"
 
-#define DRV_NAME "tegra-asoc-rt5677:"
+#define DRV_NAME "tegra-asoc:"
 
 #define GPIO_SPKR_EN    BIT(0)
 #define GPIO_HP_MUTE    BIT(1)
 #define GPIO_INT_MIC_EN BIT(2)
 #define GPIO_EXT_MIC_EN BIT(3)
 #define GPIO_HP_DET     BIT(4)
-
 #define RT5677_MCLK	19200000
 #define RT5677_SYSCLK	24576000
 
@@ -60,7 +58,7 @@
 		.channels_max = channels,	\
 	}
 
-/* machine structure which holds sound card */
+/* machine structure which holds sound card *
 struct tegra_machine {
 	struct tegra_asoc_platform_data *pdata;
 	struct tegra_asoc_audio_clock_info audio_clock;
@@ -75,70 +73,8 @@ struct tegra_machine {
 	struct regulator *digital_reg;
 	struct regulator *spk_reg;
 	struct regulator *dmic_reg;
-};
+};*/
 
-/* used for soc specific data */
-struct tegra_machine_soc_data {
-	unsigned int num_xbar_dai_links,
-		/* dai link indexes */
-		admaif_dai_link_start,
-		admaif_dai_link_end,
-		adsp_pcm_dai_link_start,
-		adsp_pcm_dai_link_end,
-		adsp_compr_dai_link_start,
-		adsp_compr_dai_link_end,
-		sfc_dai_link;
-
-	bool is_asrc_available,
-		is_clk_rate_via_dt,
-		write_cdev1_state,
-		write_idle_bias_off_state;
-
-	/* call back APIs */
-	int (*get_bclk_ratio)(struct snd_soc_pcm_runtime *, unsigned int *);
-	struct snd_soc_dai_link *(*get_dai_link)(void);
-	struct snd_soc_codec_conf *(*get_codec_conf)(void);
-	int (*append_dai_link)(struct snd_soc_dai_link *link,
-		unsigned int link_size);
-	int (*append_codec_conf)(struct snd_soc_codec_conf *conf,
-		unsigned int conf_size);
-};
-
-/* function prototypes */
-static int tegra_machine_driver_remove(struct platform_device *);
-static int tegra_machine_driver_probe(struct platform_device *);
-static void dai_link_setup(struct platform_device *);
-static int tegra_machine_sfc_init(struct snd_soc_pcm_runtime *);
-static int tegra_machine_rt5677_init(struct snd_soc_pcm_runtime *);
-
-#if IS_ENABLED(CONFIG_SND_SOC_TEGRA210_ADSP_ALT)
-static int tegra_machine_compr_set_params(struct snd_compr_stream *);
-static void tegra_machine_compr_shutdown(struct snd_compr_stream *);
-static int tegra_machine_compr_startup(struct snd_compr_stream *);
-#endif
-
-static void tegra_machine_pcm_shutdown(struct snd_pcm_substream *);
-static int tegra_machine_pcm_startup(struct snd_pcm_substream *);
-static void tegra_machine_pcm_shutdown(struct snd_pcm_substream *);
-static int tegra_machine_suspend_pre(struct snd_soc_card *);
-static int tegra_machine_pcm_hw_params(struct snd_pcm_substream *,
-		struct snd_pcm_hw_params *);
-static int tegra_machine_dai_init(struct snd_soc_pcm_runtime *,
-		int, int, u64, bool);
-static int tegra_machine_set_params(struct snd_soc_card *,
-		struct tegra_machine *, int, int, u64);
-static int tegra_machine_codec_get_rate(struct snd_kcontrol *,
-		struct snd_ctl_elem_value *);
-static int tegra_machine_codec_put_rate(struct snd_kcontrol *,
-		struct snd_ctl_elem_value *);
-static int tegra_machine_codec_get_format(struct snd_kcontrol *,
-		struct snd_ctl_elem_value *);
-static int tegra_machine_codec_put_format(struct snd_kcontrol *,
-		struct snd_ctl_elem_value *);
-static int tegra_machine_codec_get_bclk_ratio(struct snd_kcontrol *,
-		struct snd_ctl_elem_value *);
-static int tegra_machine_codec_put_bclk_ratio(struct snd_kcontrol *,
-		struct snd_ctl_elem_value *);
 /* rt565x specific APIs */
 static int tegra_rt5677_event_int_spk(struct snd_soc_dapm_widget *,
 		struct snd_kcontrol *, int);
@@ -151,7 +87,6 @@ static int tegra_rt5677_event_hp(struct snd_soc_dapm_widget *,
 
 /* t210 soc data */
 static const struct tegra_machine_soc_data soc_data_tegra210 = {
-	.num_xbar_dai_links		= TEGRA210_XBAR_DAI_LINKS,
 
 	.admaif_dai_link_start		= TEGRA210_DAI_LINK_ADMAIF1,
 	.admaif_dai_link_end		= TEGRA210_DAI_LINK_ADMAIF10,
@@ -163,21 +98,16 @@ static const struct tegra_machine_soc_data soc_data_tegra210 = {
 #endif
 	.sfc_dai_link			= TEGRA210_DAI_LINK_SFC1_RX,
 
-	.is_asrc_available		= false,
-	.is_clk_rate_via_dt		= false,
-	.write_cdev1_state		= false,
 	.write_idle_bias_off_state	= false,
 
-	.get_bclk_ratio			= &tegra_machine_get_bclk_ratio,
-	.get_dai_link			= &tegra_machine_get_dai_link,
-	.get_codec_conf			= &tegra_machine_get_codec_conf,
-	.append_dai_link		= &tegra_machine_append_dai_link,
-	.append_codec_conf		= &tegra_machine_append_codec_conf,
+	.ahub_links			= tegra210_xbar_dai_links,
+	.num_ahub_links			= TEGRA210_XBAR_DAI_LINKS,
+	.ahub_confs			= tegra210_xbar_codec_conf,
+	.num_ahub_confs			= TEGRA210_XBAR_CODEC_CONF,
 };
 
 /* t186 soc data */
 static const struct tegra_machine_soc_data soc_data_tegra186 = {
-	.num_xbar_dai_links		= TEGRA186_XBAR_DAI_LINKS,
 
 	.admaif_dai_link_start		= TEGRA186_DAI_LINK_ADMAIF1,
 	.admaif_dai_link_end		= TEGRA186_DAI_LINK_ADMAIF10,
@@ -189,16 +119,12 @@ static const struct tegra_machine_soc_data soc_data_tegra186 = {
 #endif
 	.sfc_dai_link			= TEGRA186_DAI_LINK_SFC1_RX,
 
-	.is_asrc_available		= true,
-	.is_clk_rate_via_dt		= true,
-	.write_cdev1_state		= true,
 	.write_idle_bias_off_state	= true,
 
-	.get_bclk_ratio			= &tegra_machine_get_bclk_ratio_t18x,
-	.get_dai_link			= &tegra_machine_get_dai_link_t18x,
-	.get_codec_conf			= &tegra_machine_get_codec_conf_t18x,
-	.append_dai_link		= &tegra_machine_append_dai_link_t18x,
-	.append_codec_conf		= &tegra_machine_append_codec_conf_t18x,
+	.ahub_links			= tegra186_xbar_dai_links,
+	.num_ahub_links			= TEGRA186_XBAR_DAI_LINKS,
+	.ahub_confs			= tegra186_xbar_codec_conf,
+	.num_ahub_confs			= TEGRA186_XBAR_CODEC_CONF,
 };
 
 static const char * const tegra_machine_srate_text[] = {
@@ -225,11 +151,11 @@ static const char * const tegra_machine_format_text[] = {
 
 static const struct soc_enum tegra_machine_codec_rate =
 	SOC_ENUM_SINGLE_EXT(ARRAY_SIZE(tegra_machine_srate_text),
-		tegra_machine_srate_text);
+			    tegra_machine_srate_text);
 
 static const struct soc_enum tegra_machine_codec_format =
 	SOC_ENUM_SINGLE_EXT(ARRAY_SIZE(tegra_machine_format_text),
-		tegra_machine_format_text);
+			    tegra_machine_format_text);
 
 static const int tegra_machine_srate_values[] = {
 	0,
@@ -247,20 +173,6 @@ static const int tegra_machine_srate_values[] = {
 	192000,
 };
 
-static struct snd_soc_ops tegra_machine_pcm_ops = {
-	.hw_params	= tegra_machine_pcm_hw_params,
-	.startup	= tegra_machine_pcm_startup,
-	.shutdown	= tegra_machine_pcm_shutdown,
-};
-
-#if IS_ENABLED(CONFIG_SND_SOC_TEGRA210_ADSP_ALT)
-static struct snd_soc_compr_ops tegra_machine_compr_ops = {
-	.set_params	= tegra_machine_compr_set_params,
-	.startup	= tegra_machine_compr_startup,
-	.shutdown	= tegra_machine_compr_shutdown,
-};
-#endif
-
 static int tegra_rt5677_event_int_spk(struct snd_soc_dapm_widget *w,
 					struct snd_kcontrol *k, int event)
 {
@@ -268,16 +180,12 @@ static int tegra_rt5677_event_int_spk(struct snd_soc_dapm_widget *w,
 	struct snd_soc_card *card = dapm->card;
 	struct tegra_machine *machine = snd_soc_card_get_drvdata(card);
 	struct tegra_asoc_platform_data *pdata = machine->pdata;
-
 	if (!(machine->gpio_requested & GPIO_SPKR_EN))
 		return 0;
-
 	gpio_set_value_cansleep(pdata->gpio_spkr_en,
 				!!SND_SOC_DAPM_EVENT_ON(event));
-
 	return 0;
 }
-
 static int tegra_rt5677_event_hp(struct snd_soc_dapm_widget *w,
 					struct snd_kcontrol *k, int event)
 {
@@ -285,16 +193,13 @@ static int tegra_rt5677_event_hp(struct snd_soc_dapm_widget *w,
 	struct snd_soc_card *card = dapm->card;
 	struct tegra_machine *machine = snd_soc_card_get_drvdata(card);
 	struct tegra_asoc_platform_data *pdata = machine->pdata;
-
 	if (!(machine->gpio_requested & GPIO_HP_MUTE))
 		return 0;
-
 	gpio_set_value_cansleep(pdata->gpio_hp_mute,
 				!SND_SOC_DAPM_EVENT_ON(event));
 
 	return 0;
 }
-
 static int tegra_rt5677_event_int_mic(struct snd_soc_dapm_widget *w,
 					struct snd_kcontrol *k, int event)
 {
@@ -302,16 +207,12 @@ static int tegra_rt5677_event_int_mic(struct snd_soc_dapm_widget *w,
 	struct snd_soc_card *card = dapm->card;
 	struct tegra_machine *machine = snd_soc_card_get_drvdata(card);
 	struct tegra_asoc_platform_data *pdata = machine->pdata;
-
 	if (!(machine->gpio_requested & GPIO_INT_MIC_EN))
 		return 0;
-
 	gpio_set_value_cansleep(pdata->gpio_int_mic_en,
 				!!SND_SOC_DAPM_EVENT_ON(event));
-
 	return 0;
 }
-
 static int tegra_rt5677_event_ext_mic(struct snd_soc_dapm_widget *w,
 					struct snd_kcontrol *k, int event)
 {
@@ -319,45 +220,49 @@ static int tegra_rt5677_event_ext_mic(struct snd_soc_dapm_widget *w,
 	struct snd_soc_card *card = dapm->card;
 	struct tegra_machine *machine = snd_soc_card_get_drvdata(card);
 	struct tegra_asoc_platform_data *pdata = machine->pdata;
-
 	if (!(machine->gpio_requested & GPIO_EXT_MIC_EN))
 		return 0;
-
 	gpio_set_value_cansleep(pdata->gpio_ext_mic_en,
 				!SND_SOC_DAPM_EVENT_ON(event));
-
 	return 0;
 }
-
 static const struct snd_soc_dapm_widget tegra_machine_dapm_widgets[] = {
-	SND_SOC_DAPM_SPK("x Int Spk", tegra_rt5677_event_int_spk),
-	SND_SOC_DAPM_HP("x Headphone Jack", tegra_rt5677_event_hp),
-	SND_SOC_DAPM_MIC("x Int Mic", tegra_rt5677_event_int_mic),
-	SND_SOC_DAPM_MIC("x Mic Jack", tegra_rt5677_event_ext_mic),
+	SND_SOC_DAPM_SPK("Int Spk", tegra_rt5677_event_int_spk),
+//	SND_SOC_DAPM_SPK("z Int Spk", tegra_rt5677_event_int_spk),
+	SND_SOC_DAPM_HP("Headphone Jack", tegra_rt5677_event_hp),
+	SND_SOC_DAPM_MIC("Int Mic", tegra_rt5677_event_int_mic),
+	SND_SOC_DAPM_MIC("Mic Jack", tegra_rt5677_event_ext_mic),
 
-	SND_SOC_DAPM_HP("y Headphone", tegra_rt5677_event_hp),
-	SND_SOC_DAPM_MIC("y Mic", tegra_rt5677_event_ext_mic),
-	SND_SOC_DAPM_SPK("z OUT", tegra_rt5677_event_int_spk),
-};
+/*	SND_SOC_DAPM_SPK("d1 Headphone", NULL),
+	SND_SOC_DAPM_SPK("d2 Headphone", NULL),
+	SND_SOC_DAPM_SPK("d3 Headphone", NULL),
 
-static const struct snd_kcontrol_new tegra_machine_controls[] = {
-	SOC_ENUM_EXT("codec-x rate", tegra_machine_codec_rate,
-		tegra_machine_codec_get_rate, tegra_machine_codec_put_rate),
-	SOC_ENUM_EXT("codec-x format", tegra_machine_codec_format,
-		tegra_machine_codec_get_format, tegra_machine_codec_put_format),
-	SOC_SINGLE_EXT("bclk ratio override", SND_SOC_NOPM, 0, INT_MAX, 0,
-		tegra_machine_codec_get_bclk_ratio,
-		tegra_machine_codec_put_bclk_ratio),
-};
-
-static struct snd_soc_card snd_soc_tegra_card = {
-	.owner = THIS_MODULE,
-	.controls = tegra_machine_controls,
-	.num_controls = ARRAY_SIZE(tegra_machine_controls),
-	.dapm_widgets = tegra_machine_dapm_widgets,
-	.num_dapm_widgets = ARRAY_SIZE(tegra_machine_dapm_widgets),
-	.suspend_pre = tegra_machine_suspend_pre,
-	.fully_routed = true,
+	SND_SOC_DAPM_HP("w Headphone", NULL),
+	SND_SOC_DAPM_HP("x Headphone", NULL),
+	SND_SOC_DAPM_HP("y Headphone", NULL),
+	SND_SOC_DAPM_HP("z Headphone", NULL),
+	SND_SOC_DAPM_HP("l Headphone", NULL),
+	SND_SOC_DAPM_HP("m Headphone", NULL),
+	SND_SOC_DAPM_HP("n Headphone", NULL),
+	SND_SOC_DAPM_HP("o Headphone", NULL),
+	SND_SOC_DAPM_HP("s Headphone", NULL),
+*/
+/*	SND_SOC_DAPM_MIC("y Mic", NULL),
+	SND_SOC_DAPM_SPK("z OUT", NULL),
+	SND_SOC_DAPM_MIC("Int Mic", NULL),
+	SND_SOC_DAPM_MIC("w Mic", NULL),
+	SND_SOC_DAPM_MIC("x Mic", NULL),
+	SND_SOC_DAPM_MIC("y Mic", NULL),
+	SND_SOC_DAPM_MIC("z Mic", NULL),
+	SND_SOC_DAPM_MIC("l Mic", NULL),
+	SND_SOC_DAPM_MIC("m Mic", NULL),
+	SND_SOC_DAPM_MIC("n Mic", NULL),
+	SND_SOC_DAPM_MIC("o Mic", NULL),
+	SND_SOC_DAPM_MIC("a Mic", NULL),
+	SND_SOC_DAPM_MIC("b Mic", NULL),
+	SND_SOC_DAPM_MIC("c Mic", NULL),
+	SND_SOC_DAPM_MIC("d Mic", NULL),
+	SND_SOC_DAPM_MIC("s Mic", NULL),*/
 };
 
 static struct snd_soc_pcm_stream tegra_machine_asrc_link_params[] = {
@@ -370,7 +275,7 @@ static struct snd_soc_pcm_stream tegra_machine_asrc_link_params[] = {
 };
 
 static int tegra_machine_codec_get_rate(struct snd_kcontrol *kcontrol,
-	struct snd_ctl_elem_value *ucontrol)
+					struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_card *card = snd_kcontrol_chip(kcontrol);
 	struct tegra_machine *machine = snd_soc_card_get_drvdata(card);
@@ -381,7 +286,7 @@ static int tegra_machine_codec_get_rate(struct snd_kcontrol *kcontrol,
 }
 
 static int tegra_machine_codec_put_rate(struct snd_kcontrol *kcontrol,
-	struct snd_ctl_elem_value *ucontrol)
+					struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_card *card = snd_kcontrol_chip(kcontrol);
 	struct tegra_machine *machine = snd_soc_card_get_drvdata(card);
@@ -415,70 +320,26 @@ static int tegra_machine_codec_put_format(struct snd_kcontrol *kcontrol,
 	return 0;
 }
 
-static int tegra_machine_codec_get_bclk_ratio(struct snd_kcontrol *kcontrol,
-	struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_soc_card *card = snd_kcontrol_chip(kcontrol);
-	struct tegra_machine *machine = snd_soc_card_get_drvdata(card);
-
-	ucontrol->value.integer.value[0] = machine->bclk_ratio_override;
-
-	return 0;
-}
-
-static int tegra_machine_codec_put_bclk_ratio(struct snd_kcontrol *kcontrol,
-	struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_soc_card *card = snd_kcontrol_chip(kcontrol);
-	struct tegra_machine *machine = snd_soc_card_get_drvdata(card);
-
-	machine->bclk_ratio_override = ucontrol->value.integer.value[0];
-
-	return 0;
-}
-
-static int tegra_machine_set_bclk_ratio(struct tegra_machine *machine,
-					struct snd_soc_pcm_runtime *rtd)
-{
-	unsigned int bclk_ratio;
-	int err;
-
-	if (machine->bclk_ratio_override) {
-		bclk_ratio = machine->bclk_ratio_override;
-	} else {
-		err = machine->soc_data->get_bclk_ratio(rtd, &bclk_ratio);
-		if (err < 0)
-			return err;
-	}
-
-	return snd_soc_dai_set_bclk_ratio(rtd->cpu_dai, bclk_ratio);
-}
-
 static int tegra_machine_set_params(struct snd_soc_card *card,
-					struct tegra_machine *machine,
-					int rate,
-					int channels,
-					u64 formats)
+				    struct tegra_machine *machine,
+				    unsigned int rate,
+				    unsigned int channels,
+				    u64 formats)
 {
 	unsigned int mask = (1 << channels) - 1;
+	struct snd_soc_pcm_runtime *rtd;
 	int idx = 0, err = 0;
 	u64 format_k;
 
-	int num_of_dai_links = machine->soc_data->num_xbar_dai_links +
-				machine->num_codec_links;
-	struct snd_soc_pcm_runtime *rtd;
+	int num_of_dai_links = machine->soc_data->num_ahub_links +
+			       machine->num_codec_links;
+
 
 	format_k = (machine->fmt_via_kcontrol == 2) ?
-				(1ULL << SNDRV_PCM_FORMAT_S32_LE) : formats;
+			(1ULL << SNDRV_PCM_FORMAT_S32_LE) : formats;
 
 	/* update dai link hw_params */
-#if KERNEL_VERSION(4, 5, 0) > LINUX_VERSION_CODE
-	for (idx = 0; idx < num_of_dai_links;) {
-		rtd = &card->rtd[idx];
-
-#else
 	list_for_each_entry(rtd, &card->rtd_list, list) {
-#endif
 		if (rtd->dai_link->params) {
 			struct snd_soc_pcm_stream *dai_params;
 
@@ -490,21 +351,12 @@ static int tegra_machine_set_params(struct snd_soc_card *card,
 			dai_params->channels_min = channels;
 			dai_params->formats = format_k;
 
-			if ((idx >= machine->soc_data->num_xbar_dai_links)
+			if ((idx >= machine->soc_data->num_ahub_links)
 				&& (idx < num_of_dai_links)) {
 				unsigned int fmt;
 
 				/* TODO: why below overrite is needed */
 				dai_params->formats = formats;
-
-				err = tegra_machine_set_bclk_ratio(machine,
-								   rtd);
-				if (err < 0) {
-					dev_err(card->dev,
-					"Failed to set cpu dai bclk ratio for %s\n",
-					rtd->dai_link->name);
-					return err;
-				}
 
 				fmt = rtd->dai_link->dai_fmt;
 				fmt &= SND_SOC_DAIFMT_FORMAT_MASK;
@@ -528,73 +380,35 @@ static int tegra_machine_set_params(struct snd_soc_card *card,
 	}
 	return 0;
 }
+
 static int tegra_machine_dai_init(struct snd_soc_pcm_runtime *runtime,
-					int rate,
-					int channels,
-					u64 formats,
-					bool is_playback)
+				  unsigned int rate, unsigned int channels,
+				  u64 formats)
 {
 	struct snd_soc_card *card = runtime->card;
 	struct tegra_machine *machine = snd_soc_card_get_drvdata(card);
 	struct snd_soc_pcm_stream *dai_params;
-	unsigned int clk_out_rate = 0, mclk = 0;
-	int err, codec_rate, clk_rate;
+	unsigned int aud_mclk, srate;
+	int err;
+
 	struct snd_soc_pcm_runtime *rtd;
 
-	codec_rate = tegra_machine_srate_values[machine->rate_via_kcontrol];
-	clk_rate = (machine->rate_via_kcontrol) ? codec_rate : rate;
+	srate = (machine->rate_via_kcontrol) ?
+			tegra_machine_srate_values[machine->rate_via_kcontrol] :
+			rate;
 
-	if (!machine->soc_data->is_clk_rate_via_dt) {
-		/* TODO remove this hardcoding */
-		/* aud_mclk, 256 times the sample rate */
-		clk_out_rate = clk_rate << 8;
-		switch (clk_rate) {
-		case 11025:
-			mclk = 22579200;
-			break;
-		case 22050:
-		case 44100:
-		case 88200:
-		case 176400:
-			mclk = 45158400;
-			break;
-		case 8000:
-			mclk = 24576000;
-			break;
-		case 16000:
-		case 32000:
-		case 48000:
-		case 64000:
-		case 96000:
-		case 192000:
-		default:
-			mclk = 49152000;
-			break;
-		}
-
-		err = tegra210_xbar_set_clock(mclk);
-		if (err < 0) {
-			dev_err(card->dev,
-				"Can't configure xbar clock = %d Hz\n", mclk);
-			return err;
-		}
-	}
-
-	err = tegra_alt_asoc_utils_set_rate(&machine->audio_clock, clk_rate,
-			mclk, clk_out_rate);
+	err = tegra_alt_asoc_utils_set_rate(&machine->audio_clock, srate, 0, 0);
 	if (err < 0) {
 		dev_err(card->dev, "Can't configure clocks\n");
 		return err;
 	}
 
-	if (machine->soc_data->is_clk_rate_via_dt)
-		clk_out_rate = machine->audio_clock.set_clk_out_rate;
+	aud_mclk = machine->audio_clock.set_aud_mclk_rate;
 
-	pr_info("pll_a_out0 = %d Hz, aud_mclk = %d Hz, codec rate = %d Hz\n",
-		machine->audio_clock.set_mclk,
-		machine->audio_clock.set_clk_out_rate, clk_rate);
+	pr_info("pll_a_out0 = %u Hz, aud_mclk = %u Hz, sample rate = %u Hz\n",
+		 machine->audio_clock.set_pll_out_rate, aud_mclk, srate);
 
-	/* TODO: should we pass here clk_rate ? */
+
 	err = tegra_machine_set_params(card, machine, rate, channels, formats);
 	if (err < 0)
 		return err;
@@ -604,58 +418,62 @@ static int tegra_machine_dai_init(struct snd_soc_pcm_runtime *runtime,
 		dai_params =
 		(struct snd_soc_pcm_stream *)rtd->dai_link->params;
 
-		dai_params->rate_min = clk_rate;
+		dai_params->rate_min = srate;
 		dai_params->formats = (machine->fmt_via_kcontrol == 2) ?
 			(1ULL << SNDRV_PCM_FORMAT_S32_LE) : formats;
 
-		if (machine->is_hs_supported) {
-			err = snd_soc_dai_set_pll(rtd->codec_dai, 0,
+
+/*		err = snd_soc_dai_set_pll(rtd->codec_dai, 0,
 				RT5677_PLL1_S_MCLK, RT5677_MCLK, RT5677_SYSCLK);
-			if (err < 0) {
-				dev_err(card->dev, "codec_dai pll not set\n");
-				return err;
-			}
-			err = snd_soc_dai_set_sysclk(rtd->codec_dai,
-			RT5677_SCLK_S_PLL1, clk_out_rate, SND_SOC_CLOCK_IN);
-			if (err < 0) {
-				dev_err(card->dev, "codec_dai clock not set\n");
-				return err;
-			}
-			rt5677_sel_asrc_clk_src(rtd->codec_dai->codec,
-				RT5677_DA_STEREO_FILTER | RT5677_AD_STEREO1_FILTER |
-				RT5677_AD_STEREO2_FILTER | RT5677_I2S1_SOURCE,
-				RT5677_CLK_SEL_I2S1_ASRC);
-			rt5677_sel_asrc_clk_src(rtd->codec_dai->codec,
-				RT5677_AD_STEREO3_FILTER | RT5677_DA_MONO3_L_FILTER |
-				RT5677_DA_MONO3_R_FILTER,
-				RT5677_CLK_SEL_SYS);
-
-			/* update link_param to update hw_param for DAPM */
-			dai_params->rate_min = rate;
-			dai_params->channels_min = channels;
-			dai_params->formats = formats;
-
+		if (err < 0) {
+			dev_err(card->dev, "codec_dai pll not set\n");
+			return err;
 		}
-	}
-
-	/* TODO: remove below spdif links if clk_rate is passed
-	 *	in tegra_machine_set_params
-	 */
-/*	rtd = snd_soc_get_pcm_runtime(card, "spdif-dit-1");
-	if (rtd) {
-		dai_params =
-		(struct snd_soc_pcm_stream *)rtd->dai_link->params;
-
-		dai_params->rate_min = clk_rate;
-	}
 */
-	/* set clk rate for i2s3 dai link*/
-/*	rtd = snd_soc_get_pcm_runtime(card, "spdif-dit-2");
+		err = snd_soc_dai_set_sysclk(rtd->codec_dai,
+		RT5677_SCLK_S_MCLK, aud_mclk, SND_SOC_CLOCK_IN);
+		if (err < 0) {
+			dev_err(card->dev, "codec_dai clock not set\n");
+			return err;
+		}
+/*		rt5677_sel_asrc_clk_src(rtd->codec_dai->codec,
+			RT5677_DA_STEREO_FILTER | RT5677_AD_STEREO1_FILTER |
+			RT5677_AD_STEREO2_FILTER | RT5677_I2S1_SOURCE,
+			RT5677_CLK_SEL_I2S1_ASRC);
+		rt5677_sel_asrc_clk_src(rtd->codec_dai->codec,
+			RT5677_AD_STEREO3_FILTER | RT5677_DA_MONO3_L_FILTER |
+			RT5677_DA_MONO3_R_FILTER,
+			RT5677_CLK_SEL_SYS);
+*/
+		/* update link_param to update hw_param for DAPM 
+		dai_params->rate_min = srate;
+		dai_params->channels_min = channels;
+		dai_params->formats = formats;*/
+	}
+
+/*	rtd = snd_soc_get_pcm_runtime(card, "spdif-dit-0");
 	if (rtd) {
 		dai_params =
 		(struct snd_soc_pcm_stream *)rtd->dai_link->params;
 
-		dai_params->rate_min = clk_rate;
+		dai_params->rate_min = srate;
+	}
+
+	rtd = snd_soc_get_pcm_runtime(card, "spdif-dit-1");
+	if (rtd) {
+		dai_params =
+		(struct snd_soc_pcm_stream *)rtd->dai_link->params;
+
+		dai_params->rate_min = srate;
+	}
+
+	* set clk rate for i2s3 dai link*
+	rtd = snd_soc_get_pcm_runtime(card, "spdif-dit-2");
+	if (rtd) {
+		dai_params =
+		(struct snd_soc_pcm_stream *)rtd->dai_link->params;
+
+		dai_params->rate_min = srate;
 	}
 
 	rtd = snd_soc_get_pcm_runtime(card, "spdif-dit-3");
@@ -663,7 +481,7 @@ static int tegra_machine_dai_init(struct snd_soc_pcm_runtime *runtime,
 		dai_params =
 		(struct snd_soc_pcm_stream *)rtd->dai_link->params;
 
-		dai_params->rate_min = clk_rate;
+		dai_params->rate_min = srate;
 	}
 
 	rtd = snd_soc_get_pcm_runtime(card, "spdif-dit-5");
@@ -672,41 +490,9 @@ static int tegra_machine_dai_init(struct snd_soc_pcm_runtime *runtime,
 		(struct snd_soc_pcm_stream *)rtd->dai_link->params;
 
 		* update link_param to update hw_param for DAPM *
-		dai_params->rate_min = clk_rate;
+		dai_params->rate_min = srate;
 		dai_params->channels_min = channels;
 		dai_params->formats = formats;
-	}
-
-	rtd = snd_soc_get_pcm_runtime(card, "dspk-playback-r");
-	if (rtd) {
-		dai_params =
-		(struct snd_soc_pcm_stream *)rtd->dai_link->params;
-
-		if (!strcmp(rtd->codec_dai->name, "tas2552-amplifier")) {
-			err = snd_soc_dai_set_sysclk(rtd->codec_dai,
-				TAS2552_PDM_CLK_IVCLKIN, clk_out_rate,
-				SND_SOC_CLOCK_IN);
-			if (err < 0) {
-				dev_err(card->dev, "codec_dai clock not set\n");
-				return err;
-			}
-		}
-	}
-
-	rtd = snd_soc_get_pcm_runtime(card, "dspk-playback-l");
-	if (rtd) {
-		dai_params =
-		(struct snd_soc_pcm_stream *)rtd->dai_link->params;
-
-		if (!strcmp(rtd->codec_dai->name, "tas2552-amplifier")) {
-			err = snd_soc_dai_set_sysclk(rtd->codec_dai,
-				TAS2552_PDM_CLK_IVCLKIN, clk_out_rate,
-				SND_SOC_CLOCK_IN);
-			if (err < 0) {
-				dev_err(card->dev, "codec_dai clock not set\n");
-				return err;
-			}
-		}
 	}
 */
 	rtd = snd_soc_get_pcm_runtime(card, "nau8825");
@@ -714,7 +500,7 @@ static int tegra_machine_dai_init(struct snd_soc_pcm_runtime *runtime,
 		dai_params =
 		(struct snd_soc_pcm_stream *)rtd->dai_link->params;
 
-		dai_params->rate_min = clk_rate;
+		dai_params->rate_min = srate;
 		dai_params->channels_min = channels;
 		dai_params->formats = formats;
 		dev_info(card->dev, "snd_soc_get_pcm_runtime nau8825 set\n");
@@ -726,7 +512,7 @@ static int tegra_machine_dai_init(struct snd_soc_pcm_runtime *runtime,
 		(struct snd_soc_pcm_stream *)rtd->dai_link->params;
 
 		/* update link_param to update hw_param for DAPM */
-		dai_params->rate_min = clk_rate;
+		dai_params->rate_min = srate;
 		dai_params->channels_min = channels;
 		dai_params->formats = formats;
 		dev_info(card->dev, "snd_soc_get_pcm_runtime max98357a set\n");
@@ -741,17 +527,10 @@ static int tegra_machine_pcm_hw_params(struct snd_pcm_substream *substream,
 	struct snd_soc_pcm_runtime *rtd = substream->private_data;
 	struct snd_soc_card *card = rtd->card;
 	int err;
-	bool is_playback;
-
-	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
-		is_playback = true;
-	else
-		is_playback = false;
 
 	err = tegra_machine_dai_init(rtd, params_rate(params),
-			params_channels(params),
-			(1ULL << (params_format(params))),
-			is_playback);
+				     params_channels(params),
+				     1ULL << params_format(params));
 	if (err < 0) {
 		dev_err(card->dev, "Failed dai init\n");
 		return err;
@@ -783,35 +562,12 @@ static int tegra_machine_suspend_pre(struct snd_soc_card *card)
 	struct snd_soc_pcm_runtime *rtd;
 
 	/* DAPM dai link stream work for non pcm links */
-#if KERNEL_VERSION(4, 5, 0) > LINUX_VERSION_CODE
-	unsigned int idx;
-
-	for (idx = 0; idx < card->num_rtd; idx++) {
-		rtd = &card->rtd[idx];
-#else
 	list_for_each_entry(rtd, &card->rtd_list, list) {
-#endif
 		if (rtd->dai_link->params)
 			INIT_DELAYED_WORK(&rtd->delayed_work, NULL);
 	}
 
 	return 0;
-}
-
-static int tegra_machine_dspk_init(struct snd_soc_pcm_runtime *rtd)
-{
-	struct snd_soc_card *card = rtd->card;
-	struct snd_soc_dapm_context *dapm = &card->dapm;
-	struct tegra_machine *machine = snd_soc_card_get_drvdata(card);
-	int err;
-
-	err = tegra_alt_asoc_utils_set_extern_parent(&machine->audio_clock,
-							"pll_a_out0");
-	if (err < 0)
-		dev_err(card->dev, "Failed to set extern clk parent\n");
-
-	snd_soc_dapm_sync(dapm);
-	return err;
 }
 
 #if IS_ENABLED(CONFIG_SND_SOC_TEGRA210_ADSP_ALT)
@@ -842,7 +598,6 @@ static int tegra_machine_compr_set_params(struct snd_compr_stream *cstream)
 	struct snd_soc_platform *platform = rtd->platform;
 	struct snd_codec codec_params;
 	int err;
-	bool is_playback;
 
 	if (platform->driver->compr_ops &&
 		platform->driver->compr_ops->get_params) {
@@ -857,14 +612,9 @@ static int tegra_machine_compr_set_params(struct snd_compr_stream *cstream)
 		return -EINVAL;
 	}
 
-	if (cstream->direction == SND_COMPRESS_PLAYBACK)
-		is_playback = true;
-	else
-		is_playback = false;
-
 	err = tegra_machine_dai_init(rtd, codec_params.sample_rate,
-			codec_params.ch_out, SNDRV_PCM_FMTBIT_S16_LE,
-			is_playback);
+				     codec_params.ch_out,
+				     SNDRV_PCM_FMTBIT_S16_LE);
 	if (err < 0) {
 		dev_err(card->dev, "Failed dai init\n");
 		return err;
@@ -878,7 +628,7 @@ static int tegra_machine_nau8825_init(struct snd_soc_pcm_runtime *rtd)
 {
 	struct snd_soc_card *card = rtd->card;
 	struct snd_soc_codec *codec = rtd->codec;
-//	struct tegra_machine *machine = snd_soc_card_get_drvdata(card);
+	struct tegra_machine *machine = snd_soc_card_get_drvdata(card);
 	struct snd_soc_jack *jack;
 	int err;
 
@@ -886,39 +636,41 @@ static int tegra_machine_nau8825_init(struct snd_soc_pcm_runtime *rtd)
 
 	snd_soc_codec_set_sysclk(codec, NAU8825_CLK_MCLK, 0, 0, SND_SOC_CLOCK_IN);
 
-	jack = devm_kzalloc(card->dev, sizeof(struct snd_soc_jack), GFP_KERNEL);
+/*	jack = devm_kzalloc(card->dev, sizeof(struct snd_soc_jack), GFP_KERNEL);
 	if (!jack)
 		return -ENOMEM;
-
+*/
 	/* Enable Headset and 4 Buttons Jack detection */
 	err = snd_soc_card_jack_new(card, "Headset Jack",
 	                            SND_JACK_HEADPHONE | SND_JACK_MICROPHONE |
 	                            SND_JACK_BTN_0 | SND_JACK_BTN_1 |
 	                            SND_JACK_BTN_2 | SND_JACK_BTN_3,
-	                            jack, NULL, 0);
+	                            &machine->jack, NULL, 0);
 	if (err) {
 		dev_err(card->dev, "New Headset Jack failed! (%d)\n", err);
 		return err;
 	}
 
-	err = tegra_machine_add_codec_jack_control(card, rtd, jack);
+	jack = &machine->jack;
+
+/*	err = tegra_machine_add_codec_jack_control(card, rtd, jack);
 	if (err) {
 		dev_err(card->dev, "Failed to add jack control: %d\n", err);
 		return err;
 	}
+*/
 
+	snd_jack_set_key(jack->jack, SND_JACK_BTN_0, KEY_MEDIA);
+	snd_jack_set_key(jack->jack, SND_JACK_BTN_1, KEY_VOICECOMMAND);
+	snd_jack_set_key(jack->jack, SND_JACK_BTN_2, KEY_VOLUMEUP);
+	snd_jack_set_key(jack->jack, SND_JACK_BTN_3, KEY_VOLUMEDOWN);
 	err = nau8825_enable_jack_detect(codec, jack);
 	if (err) {
 		dev_err(card->dev, "Failed to set jack for RT5677: %d\n", err);
 		return err;
 	}
 
-	snd_jack_set_key(jack->jack, SND_JACK_BTN_0, KEY_MEDIA);
-	snd_jack_set_key(jack->jack, SND_JACK_BTN_1, KEY_VOICECOMMAND);
-	snd_jack_set_key(jack->jack, SND_JACK_BTN_2, KEY_VOLUMEUP);
-	snd_jack_set_key(jack->jack, SND_JACK_BTN_3, KEY_VOLUMEDOWN);
-
-	snd_soc_dapm_sync(&card->dapm);
+//	snd_soc_dapm_sync(&card->dapm);
 
 	return 0;
 }
@@ -926,18 +678,10 @@ static int tegra_machine_nau8825_init(struct snd_soc_pcm_runtime *rtd)
 static int tegra_machine_rt5677_init(struct snd_soc_pcm_runtime *rtd)
 {
 	struct snd_soc_card *card = rtd->card;
-	struct tegra_machine *machine = snd_soc_card_get_drvdata(card);
 //	struct snd_soc_jack *jack;
-	int err;
+//	int err;
 
-//	dev_info(card->dev, "This is tegra_machine_rt5677_init 1\n");
-
-	err = tegra_alt_asoc_utils_set_extern_parent(&machine->audio_clock,
-							"pll_a_out0");
-	if (err < 0) {
-		dev_err(card->dev, "Failed to set extern clk parent\n");
-		return err;
-	}
+	dev_info(card->dev, "This is tegra_machine_rt5677_init 1\n");
 
 //	dev_info(card->dev, "This is tegra_machine_rt5677_init\n");
 
@@ -977,153 +721,126 @@ static int tegra_machine_rt5677_init(struct snd_soc_pcm_runtime *rtd)
 	return 0;
 }
 
-static int tegra_machine_sfc_init(struct snd_soc_pcm_runtime *rtd)
+static int codec_init(struct tegra_machine *machine)
 {
-	struct snd_soc_dai *codec_dai = rtd->codec_dai;
-	unsigned int in_srate, out_srate;
-	int err;
+	struct snd_soc_dai_link *dai_links = machine->asoc->dai_links;
+	unsigned int num_links = machine->asoc->num_links, i;
 
-	in_srate = 48000;
-	out_srate = 8000;
+	if (!dai_links || !num_links)
+		return -EINVAL;
 
-	err = snd_soc_dai_set_sysclk(codec_dai, 0, out_srate,
-					SND_SOC_CLOCK_OUT);
-	err = snd_soc_dai_set_sysclk(codec_dai, 0, in_srate,
-					SND_SOC_CLOCK_IN);
+	for (i = 0; i < num_links; i++) {
+		if (!dai_links[i].name)
+			continue;
 
-	return err;
-}
-
-static void dai_link_setup(struct platform_device *pdev)
-{
-	struct snd_soc_card *card = platform_get_drvdata(pdev);
-	struct tegra_machine *machine = snd_soc_card_get_drvdata(card);
-	struct snd_soc_codec_conf *tegra_machine_codec_conf = NULL;
-	struct snd_soc_codec_conf *tegra_new_codec_conf = NULL;
-	struct snd_soc_dai_link *tegra_machine_dai_links = NULL;
-	struct snd_soc_dai_link *tegra_machine_codec_links = NULL;
-	const char *codec_dai_name;
-	int i;
-
-	/* set new codec links and conf */
-	tegra_machine_codec_links = tegra_machine_new_codec_links(pdev,
-		tegra_machine_codec_links,
-		&machine->num_codec_links);
-	if (!tegra_machine_codec_links)
-		goto err_alloc_dai_link;
-
-	/* set codec init */
-	for (i = 0; i < machine->num_codec_links; i++) {
-		if (tegra_machine_codec_links[i].name) {
-			if (strstr(tegra_machine_codec_links[i].name,
-				"rt5677-playback")) {
-				codec_dai_name =
-				 tegra_machine_codec_links[i].codec_dai_name;
-				if (!strcmp("dit-hifi", codec_dai_name)) {
-					dev_info(&pdev->dev, "This is a dummy codec\n");
-					machine->is_hs_supported = false;
-				} else {
-					machine->is_hs_supported = true;
-				//	dev_info(&pdev->dev, "This is a rt5677-playback codec\n");
-					tegra_machine_codec_links[i].init =
-						tegra_machine_rt5677_init;
-				}
-			} else if (strstr(tegra_machine_codec_links[i].name,
-				"dspk-playback-r")) {
-				tegra_machine_codec_links[i].init =
-					tegra_machine_dspk_init;
-			} else if (strstr(tegra_machine_codec_links[i].name,
-				"dspk-playback-l")) {
-				tegra_machine_codec_links[i].init =
-					tegra_machine_dspk_init;
-			} else if (strstr(tegra_machine_codec_links[i].name,
-				"nau8825")) {
-			//	dev_info(&pdev->dev, "This is a nau8825 codec\n");
-				tegra_machine_codec_links[i].init =
-					tegra_machine_nau8825_init;
-			} else if (strstr(tegra_machine_codec_links[i].name,
-				"max98357a")) {
-				dev_info(&pdev->dev, "This is a max98357a codec\n");
-				tegra_machine_codec_links[i].init =
-					tegra_machine_dspk_init;
-			}
-
-		}
+		if (strstr(dai_links[i].name, "rt5677-playback") ||
+		    strstr(dai_links[i].name, "rt5677-codec-sysclk-bclk1"))
+			dai_links[i].init = tegra_machine_rt5677_init;
+		if (strstr(dai_links[i].name, "nau8825"))
+			dai_links[i].init = tegra_machine_nau8825_init;
 	}
 
-//	dev_info(card->dev, "This is dai_link_setup\n");
+	return 0;
+}
 
-	tegra_new_codec_conf = tegra_machine_new_codec_conf(pdev,
-		tegra_new_codec_conf,
-		&machine->num_codec_links);
-	if (!tegra_new_codec_conf)
-		goto err_alloc_dai_link;
+static struct snd_soc_ops tegra_machine_pcm_ops = {
+	.hw_params	= tegra_machine_pcm_hw_params,
+	.startup	= tegra_machine_pcm_startup,
+	.shutdown	= tegra_machine_pcm_shutdown,
+};
 
-	/* get the xbar dai link/codec conf structure */
-	tegra_machine_dai_links = machine->soc_data->get_dai_link();
-	if (!tegra_machine_dai_links)
-		goto err_alloc_dai_link;
+#if IS_ENABLED(CONFIG_SND_SOC_TEGRA210_ADSP_ALT)
+static struct snd_soc_compr_ops tegra_machine_compr_ops = {
+	.set_params	= tegra_machine_compr_set_params,
+	.startup	= tegra_machine_compr_startup,
+	.shutdown	= tegra_machine_compr_shutdown,
+};
+#endif
 
-	tegra_machine_codec_conf = machine->soc_data->get_codec_conf();
-	if (!tegra_machine_codec_conf)
-		goto err_alloc_dai_link;
+static void set_dai_ops(struct tegra_machine *machine)
+{
+	int i;
 
 	/* set ADMAIF dai_ops */
 	for (i = machine->soc_data->admaif_dai_link_start;
-		i <= machine->soc_data->admaif_dai_link_end; i++)
-		tegra_machine_set_dai_ops(i, &tegra_machine_pcm_ops);
-
-	/* set sfc dai_init */
-	tegra_machine_set_dai_init(machine->soc_data->sfc_dai_link,
-		&tegra_machine_sfc_init);
+	     i <= machine->soc_data->admaif_dai_link_end; i++)
+		machine->asoc->dai_links[i].ops = &tegra_machine_pcm_ops;
 #if IS_ENABLED(CONFIG_SND_SOC_TEGRA210_ADSP_ALT)
 	/* set ADSP PCM/COMPR */
 	for (i = machine->soc_data->adsp_pcm_dai_link_start;
-		i <= machine->soc_data->adsp_pcm_dai_link_end; i++) {
-		tegra_machine_set_dai_ops(i, &tegra_machine_pcm_ops);
-	}
-
+	     i <= machine->soc_data->adsp_pcm_dai_link_end; i++)
+		machine->asoc->dai_links[i].ops = &tegra_machine_pcm_ops;
 	/* set ADSP COMPR */
 	for (i = machine->soc_data->adsp_compr_dai_link_start;
-		i <= machine->soc_data->adsp_compr_dai_link_end; i++) {
-		tegra_machine_set_dai_compr_ops(i,
-			&tegra_machine_compr_ops);
-	}
+	     i <= machine->soc_data->adsp_compr_dai_link_end; i++)
+		machine->asoc->dai_links[i].compr_ops =
+			&tegra_machine_compr_ops;
 #endif
-
-	if (machine->soc_data->is_asrc_available) {
-	/* set ASRC params. The default is 2 channels */
+#if IS_ENABLED(CONFIG_SND_SOC_TEGRA186_ASRC_ALT)
+	if (!(of_machine_is_compatible("nvidia,tegra210")  ||
+		of_machine_is_compatible("nvidia,tegra210b01"))) {
+		/* set ASRC params. The default is 2 channels */
 		for (i = 0; i < 6; i++) {
-			tegra_machine_set_dai_params(TEGRA186_DAI_LINK_ASRC1_TX1
-				+ i, (struct snd_soc_pcm_stream *)
-				&tegra_machine_asrc_link_params[i]);
-			tegra_machine_set_dai_params(TEGRA186_DAI_LINK_ASRC1_RX1
-				 + i, (struct snd_soc_pcm_stream *)
-				&tegra_machine_asrc_link_params[i]);
+			int tx = TEGRA186_DAI_LINK_ASRC1_TX1 + i;
+			int rx = TEGRA186_DAI_LINK_ASRC1_RX1 + i;
+
+			machine->asoc->dai_links[tx].params =
+				&tegra_machine_asrc_link_params[i];
+			machine->asoc->dai_links[rx].params =
+				&tegra_machine_asrc_link_params[i];
 		}
 	}
-
-	/* append machine specific dai_links */
-	card->num_links = machine->soc_data->append_dai_link(
-		tegra_machine_codec_links, 2 * machine->num_codec_links);
-	tegra_machine_dai_links = machine->soc_data->get_dai_link();
-	card->dai_link = tegra_machine_dai_links;
-
-	/* append machine specific codec_conf */
-	card->num_configs = machine->soc_data->append_codec_conf(
-		tegra_new_codec_conf, machine->num_codec_links);
-	tegra_machine_codec_conf = machine->soc_data->get_codec_conf();
-	card->codec_conf = tegra_machine_codec_conf;
-
-	dev_info(card->dev, "This is dai_link_setup return\n");
-
-	return;
-
-err_alloc_dai_link:
-	dev_info(card->dev, "This is dai_link_setup err_alloc_dai_link\n");
-	tegra_machine_remove_dai_link();
-	tegra_machine_remove_codec_conf();
+#endif
 }
+
+static int add_dai_links(struct platform_device *pdev)
+{
+	struct snd_soc_card *card = platform_get_drvdata(pdev);
+	struct tegra_machine *machine = snd_soc_card_get_drvdata(card);
+	int ret;
+
+	machine->asoc = devm_kzalloc(&pdev->dev, sizeof(*machine->asoc),
+				     GFP_KERNEL);
+	if (!machine->asoc)
+		return -ENOMEM;
+
+	ret = tegra_asoc_populate_dai_links(pdev);
+	if (ret < 0)
+		return ret;
+
+	ret = tegra_asoc_populate_codec_confs(pdev);
+	if (ret < 0)
+		return ret;
+
+	ret = codec_init(machine);
+	if (ret < 0)
+		return ret;
+
+	set_dai_ops(machine);
+
+	return 0;
+}
+
+static const struct snd_kcontrol_new tegra_machine_controls[] = {
+	SOC_ENUM_EXT("codec-x rate", tegra_machine_codec_rate,
+		tegra_machine_codec_get_rate, tegra_machine_codec_put_rate),
+	SOC_ENUM_EXT("codec-x format", tegra_machine_codec_format,
+		tegra_machine_codec_get_format, tegra_machine_codec_put_format),
+	SOC_DAPM_PIN_SWITCH("Int Spk"),
+	SOC_DAPM_PIN_SWITCH("Headphone Jack"),
+	SOC_DAPM_PIN_SWITCH("Mic Jack"),
+	SOC_DAPM_PIN_SWITCH("Int Mic"),
+};
+
+static struct snd_soc_card snd_soc_tegra_card = {
+	.owner = THIS_MODULE,
+	.controls = tegra_machine_controls,
+	.num_controls = ARRAY_SIZE(tegra_machine_controls),
+	.dapm_widgets = tegra_machine_dapm_widgets,
+	.num_dapm_widgets = ARRAY_SIZE(tegra_machine_dapm_widgets),
+	.suspend_pre = tegra_machine_suspend_pre,
+	.fully_routed = true,
+};
 
 /* structure to match device tree node */
 static const struct of_device_id tegra_machine_of_match[] = {
@@ -1136,7 +853,7 @@ static const struct of_device_id tegra_machine_of_match[] = {
 	{},
 };
 
-/*static int tegra_t210ref_set_mclk(struct tegra_machine *machine, struct device *dev)
+/*static int tegra_machine_set_mclk(struct tegra_machine *machine, struct device *dev)
 {
 	int err;
 
@@ -1163,7 +880,7 @@ static int tegra_machine_driver_probe(struct platform_device *pdev)
 	/* parse card name first to log errors with proper device name */
 	ret = snd_soc_of_parse_card_name(card, "nvidia,model");
 	if (ret)
-		goto err;
+		return ret;
 
 	match = of_match_device(tegra_machine_of_match, &pdev->dev);
 	if (!match) {
@@ -1172,33 +889,20 @@ static int tegra_machine_driver_probe(struct platform_device *pdev)
 	}
 
 	if (!np) {
-		dev_err(&pdev->dev, "No device tree node for tegra machine driver");
+		dev_err(&pdev->dev, "No DT node for tegra machine driver");
 		return -ENODEV;
 	}
 
-	machine = devm_kzalloc(&pdev->dev, sizeof(struct tegra_machine),
-				   GFP_KERNEL);
-	if (!machine) {
-		ret = -ENOMEM;
-		dev_err(&pdev->dev, "Can't allocate struct for tegra_machine\n");
-		goto err;
-	}
+	machine = devm_kzalloc(&pdev->dev, sizeof(*machine), GFP_KERNEL);
+	if (!machine)
+		return -ENOMEM;
 
 	machine->soc_data = (struct tegra_machine_soc_data *)match->data;
-
-	if (!machine->soc_data->get_dai_link ||
-		!machine->soc_data->get_bclk_ratio ||
-		!machine->soc_data->get_codec_conf ||
-		!machine->soc_data->append_dai_link ||
-		!machine->soc_data->append_codec_conf) {
-		ret = -ENODEV;
-		dev_err(&pdev->dev, "Error: callback APIs are missing\n");
-		goto err;
-	}
+	if (!machine->soc_data)
+		return -EINVAL;
 
 	platform_set_drvdata(pdev, card);
 	snd_soc_card_set_drvdata(card, machine);
-	machine->is_hs_supported = false;
 
 	if (machine->soc_data->write_cdev1_state)
 		machine->audio_clock.clk_cdev1_state = 0;
@@ -1209,49 +913,27 @@ static int tegra_machine_driver_probe(struct platform_device *pdev)
 	ret = snd_soc_of_parse_audio_routing(card,
 				"nvidia,audio-routing");
 	if (ret)
-		goto err;
+		return ret;
 
-	if (of_property_read_u32(np, "nvidia,mclk-rate",
-				&machine->audio_clock.mclk_rate) < 0)
-		dev_dbg(&pdev->dev, "Missing property nvidia,mclk-rate\n");
-
+	memset(&machine->audio_clock, 0, sizeof(machine->audio_clock));
 	if (of_property_read_u32(np, "mclk-fs",
-			&machine->audio_clock.mclk_scale) < 0) {
-		machine->audio_clock.mclk_scale = 256;
+				 &machine->audio_clock.mclk_scale) < 0)
 		dev_dbg(&pdev->dev, "Missing property mclk-fs\n");
-	}
-
-	if (machine->soc_data->is_clk_rate_via_dt) {
-		if (of_property_read_u32(np, "nvidia,num-clk",
-				   &machine->audio_clock.num_clk) < 0) {
-			dev_err(&pdev->dev,
-				"Missing property nvidia,num-clk\n");
-			ret = -ENODEV;
-			goto err;
-		}
-
-		if (of_property_read_u32_array(np, "nvidia,clk-rates",
-				(u32 *)&machine->audio_clock.clk_rates,
-				machine->audio_clock.num_clk) < 0) {
-			dev_err(&pdev->dev,
-				"Missing property nvidia,clk-rates\n");
-			ret = -ENODEV;
-			goto err;
-		}
-	}
 
 	tegra_machine_dma_set_mask(pdev);
 
-	dai_link_setup(pdev);
+	ret = add_dai_links(pdev);
+	if (ret < 0)
+		goto cleanup_asoc;
 
-	pdata = devm_kzalloc(&pdev->dev,	
+	pdata = devm_kzalloc(&pdev->dev,
 				sizeof(struct tegra_asoc_platform_data),	
 				GFP_KERNEL);	
 	if (!pdata) {	
 		dev_err(&pdev->dev,	
 			"Can't allocate tegra_asoc_platform_data struct\n");	
 		ret = -ENOMEM;	
-		goto err_alloc_dai_link;	
+		goto cleanup_asoc;
 	}
 
 	pdata->gpio_spkr_en = of_get_named_gpio(np,
@@ -1268,7 +950,6 @@ static int tegra_machine_driver_probe(struct platform_device *pdev)
 		}
 		machine->gpio_requested |= GPIO_SPKR_EN;
 	}
-
 	pdata->gpio_int_mic_en = of_get_named_gpio(np,
 		"nvidia,dmic-clk-en-gpios", 0);
 	if (pdata->gpio_int_mic_en == -EPROBE_DEFER)
@@ -1283,40 +964,34 @@ static int tegra_machine_driver_probe(struct platform_device *pdev)
 		}
 		machine->gpio_requested |= GPIO_INT_MIC_EN;
 	}
-
 	pdata->gpio_codec1 = pdata->gpio_codec2 = pdata->gpio_codec3 =
 	pdata->gpio_hp_mute = pdata->gpio_ext_mic_en = -1;
-
  	machine->pdata = pdata;	
 //	machine->pcard = card;
-
 	ret = tegra_alt_asoc_utils_init(&machine->audio_clock,
 					&pdev->dev,
 					card);
-	if (ret)
-		goto err_alloc_dai_link;
+	if (ret < 0)
+		goto cleanup_asoc;
 
-/*	ret = tegra_t210ref_set_mclk(machine, &pdev->dev);
+/*	ret = tegra_machine_set_mclk(machine, &pdev->dev);
 	if (ret)
-		goto err_alloc_dai_link;
+		goto cleanup_asoc;
 */
 	ret = snd_soc_register_card(card);
 	if (ret) {
 		dev_err(&pdev->dev, "snd_soc_register_card failed (%d)\n",
 			ret);
-		goto err_alloc_dai_link;
+		goto cleanup_asoc;
 	}
 
 	tegra_machine_add_i2s_codec_controls(card,
-					machine->soc_data->num_xbar_dai_links +
+					machine->soc_data->num_ahub_links +
 					machine->num_codec_links);
 
 	return 0;
-
-err_alloc_dai_link:
-	tegra_machine_remove_dai_link();
-	tegra_machine_remove_codec_conf();
-err:
+cleanup_asoc:
+	release_asoc_phandles(machine);
 	return ret;
 }
 
@@ -1325,9 +1000,6 @@ static int tegra_machine_driver_remove(struct platform_device *pdev)
 	struct snd_soc_card *card = platform_get_drvdata(pdev);
 
 	snd_soc_unregister_card(card);
-
-	tegra_machine_remove_dai_link();
-	tegra_machine_remove_codec_conf();
 
 	return 0;
 }
