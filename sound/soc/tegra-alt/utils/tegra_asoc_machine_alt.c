@@ -2966,9 +2966,7 @@ EXPORT_SYMBOL_GPL(tegra_machine_remove_dai_link);
 int tegra_machine_append_dai_link(struct snd_soc_dai_link *link,
 		unsigned int link_size)
 {
-	unsigned int size1 = (of_machine_is_compatible("nvidia,tegra210") ||
-			of_machine_is_compatible("nvidia,tegra210b01")) ?
-			TEGRA210_XBAR_DAI_LINKS : 0;
+	unsigned int size1 = num_dai_links;
 	unsigned int size2 = link_size;
 
 	if (!tegra_asoc_machine_links) {
@@ -3204,7 +3202,7 @@ struct snd_soc_dai_link *tegra_machine_new_codec_links(
 				&prefix)) {
 				dev_err(&pdev->dev,
 					"Property 'name-prefix' missing or invalid\n");
-				goto err;
+	//			goto err;
 			}
 
 			if (of_property_read_string(subnp, "link-name",
@@ -3375,7 +3373,7 @@ struct snd_soc_codec_conf *tegra_machine_new_codec_conf(
 				&tegra_codec_conf[i].name_prefix)) {
 				dev_err(&pdev->dev,
 					"Property 'name-prefix' missing or invalid\n");
-				goto err;
+			//	goto err;
 			}
 		}
 	}

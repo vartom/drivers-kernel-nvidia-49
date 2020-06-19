@@ -52,9 +52,11 @@ struct tegra_asoc_audio_clock_info {
 	struct clk *clk_pll_a;
 	struct clk *clk_pll_a_out0;
 	struct clk *clk_cdev1;
+	struct clk *clk_cdev2;
 	struct clk *clk_ahub;
 	struct reset_control *clk_cdev1_rst;
 	int clk_cdev1_state;
+	int clk_cdev2_state;
 	struct clk *clk_m;
 	struct clk *clk_pll_p_out1;
 	int set_mclk;

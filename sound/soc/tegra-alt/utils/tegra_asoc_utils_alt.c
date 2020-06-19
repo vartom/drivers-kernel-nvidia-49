@@ -141,6 +141,12 @@ int tegra_alt_asoc_utils_set_rate(struct tegra_asoc_audio_clock_info *data,
 		return err;
 	}
 
+	err = clk_set_rate(data->clk_cdev2, clk_out_rate);
+	if (err) {
+		dev_err(data->dev, "Can't set clk_cdev2 rate: %d\n", err);
+		return err;
+	}
+
 	data->set_baseclock = new_baseclock;
 	data->set_mclk = mclk;
 	data->set_clk_out_rate = clk_out_rate;
@@ -173,6 +179,13 @@ int tegra_alt_asoc_utils_clk_enable(struct tegra_asoc_audio_clock_info *data)
 	}
 	data->clk_cdev1_state = 1;
 
+	err = clk_prepare_enable(data->clk_cdev2);
+	if (err) {
+		dev_err(data->dev, "Can't enable cdev2: %d\n", err);
+		return err;
+	}
+	data->clk_cdev2_state = 1;
+
 	return 0;
 }
 EXPORT_SYMBOL_GPL(tegra_alt_asoc_utils_clk_enable);
@@ -181,6 +194,9 @@ int tegra_alt_asoc_utils_clk_disable(struct tegra_asoc_audio_clock_info *data)
 {
 	clk_disable_unprepare(data->clk_cdev1);
 	data->clk_cdev1_state = 0;
+
+	clk_disable_unprepare(data->clk_cdev2);
+	data->clk_cdev2_state = 0;
 
 	return 0;
 }
@@ -233,6 +249,27 @@ int tegra_alt_asoc_utils_init(struct tegra_asoc_audio_clock_info *data,
 		goto err;
 	}
 
+	ret = clk_prepare_enable(data->clk_cdev1);
+	if (ret) {
+		dev_err(data->dev, "Can't enable clk cdev1/extern1");
+		goto err;
+	}
+	data->clk_cdev1_state = 1;
+
+	data->clk_cdev2 = devm_clk_get(dev, "extern2");
+	if (IS_ERR(data->clk_cdev2)) {
+		dev_err(data->dev, "Can't retrieve clk cdev2\n");
+		ret = PTR_ERR(data->clk_cdev2);
+		goto err;
+	}
+
+	ret = clk_prepare_enable(data->clk_cdev2);
+	if (ret) {
+		dev_err(data->dev, "Can't enable clk cdev2/extern2");
+		goto err;
+	}
+	data->clk_cdev2_state = 1;
+
 	/* Control the aud mclk rate and parent for usecases which might
 	 * need fixed rate and needs to be derived from other possible
 	 * parents of aud mclk clk source
@@ -280,14 +317,30 @@ int tegra_alt_asoc_utils_set_parent(struct tegra_asoc_audio_clock_info *data,
 			dev_err(data->dev, "Can't set clk cdev1/extern1 parent");
 			return ret;
 		}
+		ret = clk_set_parent(data->clk_cdev2, data->clk_pll_a_out0);
+		if (ret) {
+			dev_err(data->dev, "Can't set clk cdev2/extern2 parent");
+			return ret;
+		}
 	} else {
 		ret = clk_set_parent(data->clk_cdev1, data->clk_m);
 		if (ret) {
 			dev_err(data->dev, "Can't set clk cdev1/extern1 parent");
 			return ret;
 		}
-
 		ret = clk_set_rate(data->clk_cdev1, 13000000);
+		if (ret) {
+			dev_err(data->dev, "Can't set clk rate");
+			return ret;
+		}
+
+		ret = clk_set_parent(data->clk_cdev2, data->clk_m);
+		if (ret) {
+			dev_err(data->dev, "Can't set clk cdev2/extern2 parent");
+			return ret;
+		}
+
+		ret = clk_set_rate(data->clk_cdev2, 13000000);
 		if (ret) {
 			dev_err(data->dev, "Can't set clk rate");
 			return ret;
@@ -305,19 +358,30 @@ int tegra_alt_asoc_utils_set_extern_parent(
 	int err = 0;
 
 	rate = clk_get_rate(data->clk_cdev1);
-	if (!IS_ERR(data->clk_mclk_parent))
+	if (!IS_ERR(data->clk_mclk_parent)) {
 		err = clk_set_parent(data->clk_cdev1, data->clk_mclk_parent);
-	else if (!strcmp(parent, "clk_m"))
+		err = clk_set_parent(data->clk_cdev2, data->clk_mclk_parent);
+	}
+	else if (!strcmp(parent, "clk_m")) {
 		err = clk_set_parent(data->clk_cdev1, data->clk_m);
-	else if (!strcmp(parent, "pll_a_out0"))
+		err = clk_set_parent(data->clk_cdev2, data->clk_m);
+	}
+	else if (!strcmp(parent, "pll_a_out0")) {
 		err = clk_set_parent(data->clk_cdev1, data->clk_pll_a_out0);
-
+		err = clk_set_parent(data->clk_cdev2, data->clk_pll_a_out0);
+	}
 	if (err) {
-		dev_err(data->dev, "Can't set aud mclk clock parent");
+		dev_err(data->dev, "Can't set aud mclk clock1 parent");
 		return err;
 	}
 
 	err = clk_set_rate(data->clk_cdev1, rate);
+	if (err) {
+		dev_err(data->dev, "Can't set clk rate");
+		return err;
+	}
+
+	err = clk_set_rate(data->clk_cdev2, rate);
 	if (err) {
 		dev_err(data->dev, "Can't set clk rate");
 		return err;
